@@ -13,27 +13,26 @@ const server = http.createServer(async (req, res) => {
     res.end(jsonFile);
   }
 
-  if (url === '/add-new-office' && method === 'GET') {
-    const testData = {
-      code: '2500',
-      description: 'Bits Barranquilla',
-      address: 'Cl 45#27-1',
-      identification: '9095642112',
-      currency: 'COP',
-    };
+  if (url === '/add-new-office' && method === 'POST') {
+    const body = [];
 
-    const response = writeNewOffice(testData);
+    req.on('data', (chunk) => body.push(chunk));
 
-    if (response.includes('exists')) {
-      res.writeHead(409, { 'Content-Type': 'application/json' });
-      res.end(response);
-    } else if (response.includes('successfully')) {
-      res.writeHead(201, { 'Content-Type': 'application/json' });
-      res.end(response);
-    } else {
-      res.writeHead(500, { 'Content-Type': 'application/json' });
-      res.end('Something went wrong');
-    }
+    req.on('end', () => {
+      const data = JSON.parse(Buffer.concat(body).toString());
+      const response = writeNewOffice(data);
+
+      if (response.includes('exists')) {
+        res.writeHead(409, { 'Content-Type': 'application/json' });
+        res.end(response);
+      } else if (response.includes('successfully')) {
+        res.writeHead(201, { 'Content-Type': 'application/json' });
+        res.end(response);
+      } else {
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end('Something went wrong');
+      }
+    });
   }
 });
 

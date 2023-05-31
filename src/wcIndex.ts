@@ -1,7 +1,8 @@
-import { LitElement, TemplateResult, html } from 'lit';
+import { LitElement, PropertyValueMap, TemplateResult, html } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
 
 import axios from 'axios';
+
 import { BranchOffice, Offices } from './interfaces/officesInterface';
 import { tableStyles } from './styles/tableStyles';
 
@@ -13,22 +14,46 @@ export class WcIndex extends LitElement {
 
   static styles = [tableStyles];
 
-  @property()
+  @property({ state: true, type: Array })
   private offices: Offices[] = [];
 
-  async connectedCallback(): Promise<void> {
+  @property({ state: true })
+  private modal: HTMLDialogElement | null = null;
+
+  connectedCallback(): void {
     super.connectedCallback();
-    const { data } = await axios.get<BranchOffice>(
-      'http://localhost:3000/api/get-json-data'
-    );
+    this.getOfficesData();
+  }
+
+  async getOfficesData(): Promise<void> {
+    const { data } = await axios.get<BranchOffice>('http://localhost:3000/api/get-json-data');
     this.offices = data.branchOffice;
   }
 
+  protected firstUpdated(_changedProperties: PropertyValueMap<any> | Map<PropertyKey, unknown>): void {
+    super.firstUpdated(_changedProperties);
+    this.modal = <HTMLDialogElement>(this.shadowRoot?.getElementById('create-office'));
+  }
+
   openModal(): void {
-    const modal = <HTMLDialogElement>(
-      this.shadowRoot?.getElementById('create-office')
-    );
-    modal?.showModal();
+    this.modal?.showModal();
+  }
+
+  async submitData(e: Event): Promise<void> {
+    e.preventDefault();
+    const form = <HTMLFormElement>(this.shadowRoot?.getElementById('dialog-create-office'));
+    const formData = new FormData(form);
+    const data = Object.fromEntries(formData.entries());
+    
+    await axios.post('http://localhost:3000/api/add-new-office', data);
+    this.cleanInputValues();
+    this.getOfficesData();
+    this.modal?.close();
+  }
+
+  cleanInputValues(): void {
+    const form = <HTMLFormElement>(this.shadowRoot?.getElementById('dialog-create-office'));
+    form.reset();
   }
 
   getTableTemplate(): TemplateResult {
@@ -76,15 +101,17 @@ export class WcIndex extends LitElement {
 
   protected render(): TemplateResult {
     return html`
+
       ${this.getTableTemplate()}
       <dialog id="create-office" class="dialog-office">
-        
+
         <form action="" method="POST" id="dialog-create-office">
           
           <div class="dialog-office__form">
             <div class="dialog-office__input">
               <label>Address</label>
               <input
+                required
                 name="address"
                 type="text"
                 placeholder="Escriba la dirección aquí..."
@@ -94,6 +121,7 @@ export class WcIndex extends LitElement {
             <div class="dialog-office__input">
               <label>Code</label>
               <input
+                required
                 name="code"
                 type="text"
                 placeholder="Escriba el código aquí..."
@@ -104,6 +132,7 @@ export class WcIndex extends LitElement {
             <div class="dialog-office__input">
               <label>Currency</label>
               <input
+                required
                 name="currency"
                 type="text"
                 placeholder="Escriba la moneda aquí..."
@@ -113,6 +142,7 @@ export class WcIndex extends LitElement {
             <div class="dialog-office__input">
               <label>Description</label>
               <input
+                required
                 name="description"
                 type="text"
                 placeholder="Escriba la descripción aquí..."
@@ -123,6 +153,7 @@ export class WcIndex extends LitElement {
             <div class="dialog-office__input">
               <label>Identification</label>
               <input
+                required
                 name="identification"
                 type="text"
                 placeholder="Escriba la identificación aquí..."
@@ -130,7 +161,7 @@ export class WcIndex extends LitElement {
             </div>
           </div>
 
-          <button type="submit" class="create-office__submit">Create Office</button>
+          <button @click="${this.submitData}" type="submit" class="create-office__submit">Create Office</button>
         </form>
       </dialog>
     `;
