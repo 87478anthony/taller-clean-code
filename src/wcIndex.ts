@@ -18,27 +18,38 @@ export class WcIndex extends LitElement {
 
   async connectedCallback(): Promise<void> {
     super.connectedCallback();
-    const { data } = await axios.get<BranchOffice>('http://localhost:3000/api/get-json-data');
+    const { data } = await axios.get<BranchOffice>(
+      'http://localhost:3000/api/get-json-data'
+    );
     this.offices = data.branchOffice;
   }
 
+  openModal(): void {
+    const modal = <HTMLDialogElement>(
+      this.shadowRoot?.getElementById('create-office')
+    );
+    modal?.showModal();
+  }
+
   getTableTemplate(): TemplateResult {
-    return html` <div class="table-container">
-      <div class="table-header">
-        <div class="table-header__item">Address</div>
-        <div class="table-header__item">Code</div>
-        <div class="table-header__item">Currency</div>
-        <div class="table-header__item">Description</div>
-        <div class="table-header__item">Identification</div>
-        <div class="table-header__item"></div>
+    return html`
+      <div class="table-container">
+        <div class="table-header">
+          <div class="table-header__item">Address</div>
+          <div class="table-header__item">Code</div>
+          <div class="table-header__item">Currency</div>
+          <div class="table-header__item">Description</div>
+          <div class="table-header__item">Identification</div>
+          <div class="table-header__item"></div>
+        </div>
+
+        <div class="table-content">
+          ${this.offices.map(this.getTableResults)}
+        </div>
       </div>
 
-      <div class="table-content">${this.offices.map(this.getTableResults)}</div>
-
-      <div class="table-footer">
-        <button class="table-footer__button">Crear</button>
-      </div>
-    </div>`;
+      <button @click="${this.openModal}" class="button-create">Crear</button>
+    `;
   }
 
   getTableResults({
@@ -64,6 +75,64 @@ export class WcIndex extends LitElement {
   }
 
   protected render(): TemplateResult {
-    return this.getTableTemplate();
+    return html`
+      ${this.getTableTemplate()}
+      <dialog id="create-office" class="dialog-office">
+        
+        <form action="" method="POST" id="dialog-create-office">
+          
+          <div class="dialog-office__form">
+            <div class="dialog-office__input">
+              <label>Address</label>
+              <input
+                name="address"
+                type="text"
+                placeholder="Escriba la dirección aquí..."
+              />
+            </div>
+
+            <div class="dialog-office__input">
+              <label>Code</label>
+              <input
+                name="code"
+                type="text"
+                placeholder="Escriba el código aquí..."
+              />
+            </div>
+          
+
+            <div class="dialog-office__input">
+              <label>Currency</label>
+              <input
+                name="currency"
+                type="text"
+                placeholder="Escriba la moneda aquí..."
+              />
+            </div>
+
+            <div class="dialog-office__input">
+              <label>Description</label>
+              <input
+                name="description"
+                type="text"
+                placeholder="Escriba la descripción aquí..."
+              />
+            </div>
+          
+
+            <div class="dialog-office__input">
+              <label>Identification</label>
+              <input
+                name="identification"
+                type="text"
+                placeholder="Escriba la identificación aquí..."
+              />
+            </div>
+          </div>
+
+          <button type="submit" class="create-office__submit">Create Office</button>
+        </form>
+      </dialog>
+    `;
   }
 }
